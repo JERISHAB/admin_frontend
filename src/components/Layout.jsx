@@ -10,8 +10,12 @@ const Layout = ({ children }) => {
     // Fetch user data from the backend
     const fetchUserData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/v1/user"); // Replace with your API endpoint
-        setUser(response.data);
+        const response = await axios.get("http://localhost:8000/api/v1/users/user/", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        });
+        setUser(response.data.data); // Adjusted to match the response structure
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -63,7 +67,7 @@ const Layout = ({ children }) => {
           <div className="relative flex items-center gap-3 p-4 rounded-lg group">
             <FaUserCircle className="text-4xl text-gray-500" />
             <div>
-              <p className="text-black font-semibold">{user.name}</p>
+              <p className="text-black font-semibold">{user.username}</p>
               <p className="text-gray-600 text-sm">{user.role}</p>
             </div>
             <button
