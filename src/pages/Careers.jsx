@@ -46,7 +46,7 @@ const Careers = () => {
   }, []);
 
   const updateJobStatus = (id, newStatus) => {
-    api.patch(`/jobs/${id}`, { status: newStatus })
+    api.put(`/jobs/${id}/status/${newStatus}/`)
       .then(() => setJobs(jobs.map(job => 
         job.id === id ? { ...job, status: newStatus } : job)))
       .catch(error => console.error("Error updating job status:", error));
@@ -175,7 +175,7 @@ const Careers = () => {
               {/* Make Public Link */}
               <p 
                 className="text-blue-500 mt-2 cursor-pointer"
-                onClick={() => updateJobStatus(job.id, "public")}
+                onClick={() => setConfirmationModal({ isOpen: true, type: "status", name: job.title, from: job.status, to: "public", action: "public", jobId: job.id })}
               >
                 Make Public
               </p>

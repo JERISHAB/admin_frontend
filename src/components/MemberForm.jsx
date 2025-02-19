@@ -38,7 +38,7 @@ const MemberForm = ({ onClose }) => {
     setError("");
 
     if (!refreshToken) {
-      setError("No valid refresh token found. Please log in again.");
+      setError("Please log in again.");
       setLoading(false);
       return;
     }
