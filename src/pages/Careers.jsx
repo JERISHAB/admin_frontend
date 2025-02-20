@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getAccessToken } from "../api/api";
 import JobForm from "../components/JobForm";
 import ConfirmationModal from "../components/ConfirmationModal";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api/v1",
+  baseURL: "http://127.0.0.1:8000/api/v1", // Direct URL for the base URL
 });
 
 api.interceptors.request.use(
@@ -26,6 +27,7 @@ const Careers = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null); // Track which dropdown is open
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({ isOpen: false, type: "", name: "", from: "", to: "", action: null, jobId: null });
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get("/jobs/")
@@ -59,12 +61,18 @@ const Careers = () => {
   };
 
   const handleSubmit = (newJob) => {
-    api.post("/jobs/", newJob)
-      .then(response => {
-        setJobs([...jobs, response.data]);
-        setIsModalOpen(false);
-      })
-      .catch(error => console.error("Error creating job:", error));
+    // api.post("/jobs/", newJob)
+    //   .then(response => {
+    //     setJobs([...jobs, response.data]);
+    //     setIsModalOpen(false);
+    //   })
+    //   .catch(error => console.error("Error creating job:", error));
+
+    if (newJob) {
+      console.log("New job data in handle submit:", newJob);
+    } else {
+      console.log("Error in creating new job data in handle submit");
+    }
   };
 
   const handleConfirm = () => {
@@ -153,7 +161,7 @@ const Careers = () => {
                   </div>
                   <button 
                     className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
-                    onClick={() => console.log("Edit job", job.id)}
+                    onClick={() => navigate(`/edit-job/${job.id}`)}
                   >
                     Edit
                   </button>
