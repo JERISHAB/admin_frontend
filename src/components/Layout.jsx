@@ -33,15 +33,15 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="h-screen flex flex-col">
       {/* Navbar */}
       <div className="bg-white text-black p-4 w-full shadow-md">
         <h1 className="text-xl font-bold">Boson Admin</h1>
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-1/5 bg-gray-200 p-4 flex flex-col justify-between">
+        <div className="w-1/5 bg-gray-200 p-4 flex flex-col justify-between h-full">
           {/* Navigation Links */}
           <ul>
             {["Members", "Careers"].map((item) => (
