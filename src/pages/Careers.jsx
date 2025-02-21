@@ -55,19 +55,12 @@ const Careers = () => {
   };
 
   const deleteJob = (id) => {
-    api.delete(`/jobs/${id}`)
+    api.delete(`/jobs/${id}/delete/`)
       .then(() => setJobs(jobs.filter(job => job.id !== id)))
       .catch(error => console.error("Error deleting job:", error));
   };
 
   const handleSubmit = (newJob) => {
-    // api.post("/jobs/", newJob)
-    //   .then(response => {
-    //     setJobs([...jobs, response.data]);
-    //     setIsModalOpen(false);
-    //   })
-    //   .catch(error => console.error("Error creating job:", error));
-
     if (newJob) {
       console.log("New job data in handle submit:", newJob);
     } else {
