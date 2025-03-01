@@ -45,18 +45,6 @@ const EditJob = () => {
     else{
       console.log("Error in creating updated job data in handle submit"); // Debugging step 7
     }
-
-    // const token = localStorage.getItem("refresh_token");
-    // axios.put(`http://127.0.0.1:8000/api/v1/jobs/${id}/edit/`, updatedJob, {
-    //   headers: { Authorization: `Bearer ${token}` }
-    // })
-    //   .then(response => {
-    //     console.log("Job updated successfully:", response.data);
-    //     navigate("/careers");
-    //   })
-    //   .catch(error => {
-    //     console.error("Error updating job:", error.response ? error.response.data : error.message);
-    //   });
   };
 
   return (
