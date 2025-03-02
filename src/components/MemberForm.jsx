@@ -5,8 +5,8 @@ const MemberForm = ({ onClose }) => {
   const [newMember, setNewMember] = useState({
     username: "",
     email: "",
-    role: "Editor",
-    password: "defaultPassword123", // Default password (update as needed)
+    role: "editor",
+    password: "", // Password field added
   });
 
   const [loading, setLoading] = useState(false);
@@ -55,11 +55,9 @@ const MemberForm = ({ onClose }) => {
         }
       );
 
-      if (response.status === 201) {
-        alert("Member created successfully!");
-        setNewMember({ username: "", email: "", role: "editor", password: "defaultPassword123" });
-        onClose();
-      }
+      setNewMember({ username: "", email: "", role: "editor", password: "" });
+      onClose();
+      onSubmit(); // Refresh and navigate
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create member. Please try again.");
     } finally {
@@ -103,6 +101,17 @@ const MemberForm = ({ onClose }) => {
               type="text"
               name="username"
               value={newMember.username}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none"
+              required
+            />
+          </div>
+          <div className="mb-3 text-left">
+            <label className="block text-gray-600">Enter Password</label>
+            <input
+              type="password"
+              name="password"
+              value={newMember.password}
               onChange={handleInputChange}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none"
               required

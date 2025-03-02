@@ -1,105 +1,135 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { getAccessToken } from "../api/api";
+import JobService from "../api/jobService"; // Import JobService
 import JobForm from "../components/JobForm";
 import ConfirmationModal from "../components/ConfirmationModal";
-
-const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/v1", // Direct URL for the base URL
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 const Careers = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [dropdownOpen, setDropdownOpen] = useState(null); // Track which dropdown is open
+  const [dropdownOpen, setDropdownOpen] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [confirmationModal, setConfirmationModal] = useState({ isOpen: false, type: "", name: "", from: "", to: "", action: null, jobId: null });
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: "",
+    name: "",
+    from: "",
+    to: "",
+    action: null,
+    jobId: null,
+  });
   const navigate = useNavigate();
 
+  // Fetch Jobs
+  const fetchJobs = async () => {
+    setLoading(true);
+    try {
+      const response = await JobService.getJobs();
+      setJobs(response.data);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setJobs([]);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    api.get("/jobs/")
-      .then(response => {
-        if (response.data && Array.isArray(response.data.data)) {
-          setJobs(response.data.data);
-        } else {
-          console.error("Unexpected response format:", response);
-          setJobs([]);
-        }
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error("Error fetching jobs:", error);
-        setLoading(false);
-        setJobs([]);
-      });
+    fetchJobs();
   }, []);
 
-  const updateJobStatus = (id, newStatus) => {
-    api.put(`/jobs/${id}/status/${newStatus}/`)
-      .then(() => setJobs(jobs.map(job => 
-        job.id === id ? { ...job, status: newStatus } : job)))
-      .catch(error => console.error("Error updating job status:", error));
-  };
-
-  const deleteJob = (id) => {
-    api.delete(`/jobs/${id}/delete/`)
-      .then(() => setJobs(jobs.filter(job => job.id !== id)))
-      .catch(error => console.error("Error deleting job:", error));
-  };
-
-  const handleSubmit = (newJob) => {
-    if (newJob) {
-      console.log("New job data in handle submit:", newJob);
-    } else {
-      console.log("Error in creating new job data in handle submit");
+  // Update Job Status
+  const handleUpdateJobStatus = async (id, newStatus) => {
+    try {
+      await JobService.updateJobStatus(id, newStatus);
+      setJobs((prevJobs) =>
+        prevJobs.map((job) =>
+          job.id === id ? { ...job, status: newStatus } : job
+        )
+      );
+    } catch (error) {
+      console.error("Error updating job status:", error);
     }
   };
 
+  // Delete Job
+  const handleDeleteJob = async (id) => {
+    try {
+      await JobService.deleteJob(id);
+      setJobs((prevJobs) => prevJobs.filter((job) => job.id !== id));
+    } catch (error) {
+      console.error("Error deleting job:", error);
+    }
+  };
+
+  // Add Job
+  const handleSubmit = async (newJob) => {
+    try {
+      await JobService.addJob(newJob);
+      setIsModalOpen(false);
+      fetchJobs(); // Refresh job list
+    } catch (error) {
+      console.error("Error adding job:", error);
+    }
+  };
+
+  // Handle Confirmation
   const handleConfirm = () => {
     if (confirmationModal.action === "delete") {
-      deleteJob(confirmationModal.jobId);
+      handleDeleteJob(confirmationModal.jobId);
     } else {
-      updateJobStatus(confirmationModal.jobId, confirmationModal.action);
+      handleUpdateJobStatus(confirmationModal.jobId, confirmationModal.action);
     }
-    setConfirmationModal({ isOpen: false, type: "", name: "", from: "", to: "", action: null, jobId: null });
+    setConfirmationModal({
+      isOpen: false,
+      type: "",
+      name: "",
+      from: "",
+      to: "",
+      action: null,
+      jobId: null,
+    });
   };
 
-  const filteredJobs = filter === "all" ? jobs : jobs.filter(job => job.status === filter);
+  const filteredJobs =
+    filter === "all" ? jobs : jobs.filter((job) => job.status === filter);
 
   return (
     <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">View and Manage Careers</h2>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded shadow" onClick={() => setIsModalOpen(true)}>Add New Job</button>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow"
+          onClick={() => setIsModalOpen(true)}
+        >
+          Add New Job
+        </button>
       </div>
-      
-      {/* Minimalistic Filter Dropdown */}
+
+      {/* Filter Dropdown */}
       <div className="relative inline-block text-left mb-4">
-        <button 
-          onClick={() => setDropdownOpen(dropdownOpen === "filter" ? null : "filter")}
+        <button
+          onClick={() =>
+            setDropdownOpen(dropdownOpen === "filter" ? null : "filter")
+          }
           className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2"
         >
           {filter.charAt(0).toUpperCase() + filter.slice(1)}
-          <span className="transform transition-transform" style={{ transform: dropdownOpen === "filter" ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+          <span
+            className="transform transition-transform"
+            style={{
+              transform:
+                dropdownOpen === "filter" ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            ▼
+          </span>
         </button>
         {dropdownOpen === "filter" && (
           <div className="absolute left-0 mt-2 w-40 bg-white border rounded-lg shadow-lg">
-            {['all', 'private', 'active', 'closed'].map(status => (
-              <div 
-                key={status} 
+            {["all", "private", "active", "closed"].map((status) => (
+              <div
+                key={status}
                 className="px-4 py-2 cursor-pointer hover:bg-gray-100"
                 onClick={() => {
                   setFilter(status);
@@ -112,15 +142,17 @@ const Careers = () => {
           </div>
         )}
       </div>
-      
+
       {loading ? (
         <p>Loading jobs...</p>
       ) : (
         <div className="flex flex-col gap-4">
-          {filteredJobs.map(job => (
-            <div key={job.id} className="p-6 bg-white shadow-lg rounded-lg border w-full">
-              
-              {/* Top Row: Category, Status on the Left & Buttons on the Right */}
+          {filteredJobs.map((job) => (
+            <div
+              key={job.id}
+              className="p-6 bg-white shadow-lg rounded-lg border w-full"
+            >
+              {/* Top Row: Category, Status & Buttons */}
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 bg-gray-200 text-blue-600 rounded-lg font-semibold">
@@ -132,19 +164,31 @@ const Careers = () => {
                 </div>
                 <div className="flex gap-2">
                   <div className="relative">
-                    <button 
+                    <button
                       className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
-                      onClick={() => setDropdownOpen(dropdownOpen === job.id ? null : job.id)}
+                      onClick={() =>
+                        setDropdownOpen(dropdownOpen === job.id ? null : job.id)
+                      }
                     >
                       Change Status
                     </button>
                     {dropdownOpen === job.id && (
                       <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg z-10">
-                        {['active', 'private', 'closed'].map(status => (
-                          <div 
-                            key={status} 
+                        {["active", "private", "closed"].map((status) => (
+                          <div
+                            key={status}
                             className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => setConfirmationModal({ isOpen: true, type: "status", name: job.title, from: job.status, to: status, action: status, jobId: job.id })}
+                            onClick={() =>
+                              setConfirmationModal({
+                                isOpen: true,
+                                type: "status",
+                                name: job.title,
+                                from: job.status,
+                                to: status,
+                                action: status,
+                                jobId: job.id,
+                              })
+                            }
                           >
                             {status.charAt(0).toUpperCase() + status.slice(1)}
                           </div>
@@ -152,31 +196,51 @@ const Careers = () => {
                       </div>
                     )}
                   </div>
-                  <button 
+                  <button
                     className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
                     onClick={() => navigate(`/edit-job/${job.id}`)}
                   >
                     Edit
                   </button>
-                  <button 
+                  <button
                     className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
-                    onClick={() => setConfirmationModal({ isOpen: true, type: "delete", name: job.title, from: "", to: "", action: "delete", jobId: job.id })}
+                    onClick={() =>
+                      setConfirmationModal({
+                        isOpen: true,
+                        type: "delete",
+                        name: job.title,
+                        from: "",
+                        to: "",
+                        action: "delete",
+                        jobId: job.id,
+                      })
+                    }
                   >
                     Delete
                   </button>
                 </div>
               </div>
 
-              {/* Job Title */}
+              {/* Job Details */}
               <h3 className="text-lg font-bold text-gray-900">{job.title}</h3>
+              <p className="text-gray-500 mt-1">
+                Experience Required: {job.experience_required} years
+              </p>
 
-              {/* Experience */}
-              <p className="text-gray-500 mt-1">Experience Required: {job.experience_required} years</p>
-
-              {/* Make Public Link */}
-              <p 
+              {/* Make Public */}
+              <p
                 className="text-blue-500 mt-2 cursor-pointer"
-                onClick={() => setConfirmationModal({ isOpen: true, type: "status", name: job.title, from: job.status, to: "public", action: "public", jobId: job.id })}
+                onClick={() =>
+                  setConfirmationModal({
+                    isOpen: true,
+                    type: "status",
+                    name: job.title,
+                    from: job.status,
+                    to: "public",
+                    action: "public",
+                    jobId: job.id,
+                  })
+                }
               >
                 Make Public
               </p>
@@ -185,21 +249,9 @@ const Careers = () => {
         </div>
       )}
 
-      {/* Modal for Adding New Job */}
-      {isModalOpen && (
-        <JobForm onSubmit={handleSubmit} onClose={() => setIsModalOpen(false)} />
-      )}
-
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={confirmationModal.isOpen}
-        type={confirmationModal.type}
-        name={confirmationModal.name}
-        from={confirmationModal.from}
-        to={confirmationModal.to}
-        onConfirm={handleConfirm}
-        onCancel={() => setConfirmationModal({ isOpen: false, type: "", name: "", from: "", to: "", action: null, jobId: null })}
-      />
+      {/* Modals */}
+      {isModalOpen && <JobForm onSubmit={handleSubmit} onClose={() => setIsModalOpen(false)} />}
+      <ConfirmationModal {...confirmationModal} onConfirm={handleConfirm} onCancel={() => setConfirmationModal({ isOpen: false })} />
     </>
   );
 };
