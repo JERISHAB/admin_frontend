@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
       try {
         const response = await axios.get("http://localhost:8000/api/v1/users/user/", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
         setUser(response.data.data); // Adjusted to match the response structure

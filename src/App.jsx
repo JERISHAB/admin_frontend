@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/members" element={<ProtectedRoute element={<Members />} />} />
         <Route path="/careers" element={<ProtectedRoute element={<Careers />} />} />
-        <Route path="/edit-job/:id" element={<ProtectedRoute element={<EditJob />} />} /> {/* Add the edit job route */}
+        <Route path="/edit-job/:id" element={<ProtectedRoute element={<EditJob />} />} />
       </Routes>
     </Router>
   );

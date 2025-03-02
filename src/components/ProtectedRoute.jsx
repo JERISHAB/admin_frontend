@@ -3,7 +3,7 @@ import Layout from "./Layout";
 
 const ProtectedRoute = ({ element }) => {
   const isAuthenticated = () => {
-    return !!localStorage.getItem("access_token");
+    return !!localStorage.getItem("accessToken");
   };
 
   return isAuthenticated() ? <Layout>{element}</Layout> : <Navigate to="/" />;

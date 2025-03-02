@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -8,6 +8,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -18,8 +19,8 @@ const LoginPage = () => {
 
       // Check if the response contains the access token and refresh token
       if (response.data && response.data.data && response.data.data.access_token && response.data.data.refresh_token) {
-        localStorage.setItem("access_token", response.data.data.access_token); // Save the access token
-        localStorage.setItem("refresh_token", response.data.data.refresh_token); // Save the refresh token
+        localStorage.setItem("accessToken", response.data.data.access_token); // Save the access token
+        localStorage.setItem("refreshToken", response.data.data.refresh_token); // Save the refresh token
         navigate("/members");
       } else {
         setError("Invalid credentials");
