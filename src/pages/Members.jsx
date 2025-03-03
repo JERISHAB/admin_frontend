@@ -106,10 +106,13 @@ const Members = () => {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">View and Manage Members</h2>
+        {/* Add Member Button with Lock for Non-Admins */}
         <button
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          onClick={() => currentUser?.role === "admin" && setIsModalOpen(true)}
+          disabled={currentUser?.role !== "admin"}
         >
+          {currentUser?.role !== "admin" && <FaLock className="text-gray-300 text-sm" />}
           Add Member
         </button>
       </div>
@@ -142,10 +145,10 @@ const Members = () => {
                 <div className="relative">
                   <button
                     onClick={() => toggleDropdown(member.id)}
-                    className="flex items-center gap-2 px-3 py-1 text-gray-600 border rounded hover:bg-gray-100"
+                    className="flex items-center gap-2 px-3 py-1 text-gray-600 border rounded hover:bg-gray-100 disabled:opacity-50"
                     disabled={currentUser?.role !== "admin"}
                   >
-                    {currentUser?.role !== "admin" && <FaLock className="text-gray-500" />}
+                    {currentUser?.role !== "admin" && <FaLock className="text-gray-400 text-xs" />}
                     Change Role
                   </button>
                   {dropdownVisible === member.id && currentUser?.role === "admin" && (
@@ -186,10 +189,10 @@ const Members = () => {
                       memberId: member.id,
                     })
                   }
-                  className="flex items-center gap-2 text-red-500 border px-3 py-1 rounded hover:bg-red-100"
+                  className="flex items-center gap-2 text-red-500 border px-3 py-1 rounded hover:bg-red-100 disabled:opacity-50"
                   disabled={currentUser?.role !== "admin"}
                 >
-                  {currentUser?.role !== "admin" && <FaLock className="text-gray-500" />}
+                  {currentUser?.role !== "admin" && <FaLock className="text-gray-400 text-xs" />}
                   Remove
                 </button>
               </div>
