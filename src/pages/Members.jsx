@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import memberService from "../api/memberService";
-import { FaUser } from "react-icons/fa";
+import userService from "../api/userService"; // Import user service
+import { FaUser, FaLock } from "react-icons/fa"; // Import lock icon
 import MemberForm from "../components/MemberForm";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 const Members = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null); // Store current user
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(null);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -24,19 +26,28 @@ const Members = () => {
 
   useEffect(() => {
     fetchMembers();
+    fetchCurrentUser();
   }, []);
 
   const fetchMembers = async () => {
     setLoading(true);
     try {
       const response = await memberService.getMembers();
-      const membersData = response.data; // Ensure the data exists
-      setMembers(Array.isArray(membersData) ? membersData : []); // Always set an array
+      setMembers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching members:", error);
-      setMembers([]); // Ensure state is always an array
+      setMembers([]);
     }
     setLoading(false);
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const user = await userService.getCurrentUser();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+    }
   };
 
   const handleRoleChange = async (id, newRole) => {
@@ -76,7 +87,15 @@ const Members = () => {
       ? handleRemoveMember(confirmationModal.memberId)
       : handleRoleChange(confirmationModal.memberId, confirmationModal.action);
 
-    setConfirmationModal({ isOpen: false, type: "", name: "", from: "", to: "", action: null, memberId: null });
+    setConfirmationModal({
+      isOpen: false,
+      type: "",
+      name: "",
+      from: "",
+      to: "",
+      action: null,
+      memberId: null,
+    });
   };
 
   const toggleDropdown = (id) => {
@@ -84,11 +103,13 @@ const Members = () => {
   };
 
   return (
-    //error chech members
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">View and Manage Members</h2>
-        <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={() => setIsModalOpen(true)}>
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={() => setIsModalOpen(true)}
+        >
           Add Member
         </button>
       </div>
@@ -97,26 +118,37 @@ const Members = () => {
       ) : (
         <ul className="space-y-2">
           {members.map((member) => (
-            <li key={member.id} className="flex items-center bg-white p-4 rounded-lg shadow-md border gap-4">
+            <li
+              key={member.id}
+              className="flex items-center bg-white p-4 rounded-lg shadow-md border gap-4"
+            >
               <FaUser className="text-gray-600" />
               <div className="flex items-center gap-4">
                 <span className="text-gray-800 font-medium">{member.username}</span>
-                <span className={`px-2 py-1 text-sm rounded border ${
+                <span
+                  className={`px-2 py-1 text-sm rounded border ${
                     member.role === "admin"
                       ? "text-blue-600 border-blue-500"
                       : member.role === "editor"
                       ? "text-purple-600 border-purple-500"
                       : "text-gray-600 border-gray-500"
-                  }`}>
+                  }`}
+                >
                   {member.role}
                 </span>
               </div>
               <div className="ml-auto flex items-center gap-2">
+                {/* Change Role Button */}
                 <div className="relative">
-                  <button onClick={() => toggleDropdown(member.id)} className="px-3 py-1 text-gray-600 border rounded hover:bg-gray-100">
+                  <button
+                    onClick={() => toggleDropdown(member.id)}
+                    className="flex items-center gap-2 px-3 py-1 text-gray-600 border rounded hover:bg-gray-100"
+                    disabled={currentUser?.role !== "admin"}
+                  >
+                    {currentUser?.role !== "admin" && <FaLock className="text-gray-500" />}
                     Change Role
                   </button>
-                  {dropdownVisible === member.id && (
+                  {dropdownVisible === member.id && currentUser?.role === "admin" && (
                     <div className="absolute right-0 mt-2 w-32 bg-white border rounded-lg shadow-lg z-10">
                       {["admin", "editor", "viewer"].map((role) => (
                         <button
@@ -140,6 +172,8 @@ const Members = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Remove Member Button */}
                 <button
                   onClick={() =>
                     setConfirmationModal({
@@ -152,8 +186,10 @@ const Members = () => {
                       memberId: member.id,
                     })
                   }
-                  className="text-red-500 border px-3 py-1 rounded hover:bg-red-100"
+                  className="flex items-center gap-2 text-red-500 border px-3 py-1 rounded hover:bg-red-100"
+                  disabled={currentUser?.role !== "admin"}
                 >
+                  {currentUser?.role !== "admin" && <FaLock className="text-gray-500" />}
                   Remove
                 </button>
               </div>
@@ -162,7 +198,9 @@ const Members = () => {
         </ul>
       )}
 
-      {isModalOpen && <MemberForm onSubmit={handleAddMember} onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <MemberForm onSubmit={handleAddMember} onClose={() => setIsModalOpen(false)} />
+      )}
 
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
@@ -171,7 +209,17 @@ const Members = () => {
         from={confirmationModal.from}
         to={confirmationModal.to}
         onConfirm={handleConfirm}
-        onCancel={() => setConfirmationModal({ isOpen: false, type: "", name: "", from: "", to: "", action: null, memberId: null })}
+        onCancel={() =>
+          setConfirmationModal({
+            isOpen: false,
+            type: "",
+            name: "",
+            from: "",
+            to: "",
+            action: null,
+            memberId: null,
+          })
+        }
       />
     </div>
   );
