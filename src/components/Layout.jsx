@@ -1,23 +1,18 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa"; // Import user icon
-import axios from "axios";
+import userService from "../api/userService";
 
 const Layout = ({ children }) => {
   const [user, setUser] = useState({ name: "", role: "" });
 
   useEffect(() => {
-    // Fetch user data from the backend
     const fetchUserData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/v1/users/user/", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        });
-        setUser(response.data.data); // Adjusted to match the response structure
+        const userData = await userService.getCurrentUser();
+        setUser(userData);
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching user:", error);
       }
     };
 
