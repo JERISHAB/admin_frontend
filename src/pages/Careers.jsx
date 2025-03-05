@@ -3,8 +3,12 @@ import { useNavigate } from "react-router-dom";
 import JobService from "../api/jobService"; // Import JobService
 import JobForm from "../components/JobForm";
 import ConfirmationModal from "../components/ConfirmationModal";
+import UserService from "../api/userService";
+import { Lock } from "lucide-react"; // Keep Lucide's lock icon
+import { FaLock } from "react-icons/fa"; // Import FontAwesome Lock icon
 
 const Careers = () => {
+  const [currentUser, setCurrentUser] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -34,8 +38,19 @@ const Careers = () => {
     setLoading(false);
   };
 
+  const fetchUser = async () => {
+    try {
+      const response = await UserService.getCurrentUser();
+      setCurrentUser(response);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  }
+
+
   useEffect(() => {
     fetchJobs();
+    fetchUser();
   }, []);
 
   // Update Job Status
@@ -98,10 +113,14 @@ const Careers = () => {
     <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">View and Manage Careers</h2>
+
+        {/* Add New Job Button */}
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow"
-          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded shadow disabled:opacity-50"
+          onClick={() => currentUser?.role !== "viewer" && setIsModalOpen(true)}
+          disabled={currentUser?.role === "viewer"}
         >
+          {currentUser?.role === "viewer" && <Lock size={16} className="text-gray-300" />}
           Add New Job
         </button>
       </div>
@@ -162,14 +181,16 @@ const Careers = () => {
                     {job.status}
                   </span>
                 </div>
+                {/* Job Actions */}
                 <div className="flex gap-2">
+                   {/* Change Status Button */}
                   <div className="relative">
                     <button
-                      className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
-                      onClick={() =>
-                        setDropdownOpen(dropdownOpen === job.id ? null : job.id)
-                      }
+                      className={`flex items-center gap-2 px-3 py-1 border rounded shadow ${currentUser?.role === "viewer" ? "opacity-50 cursor-not-allowed" : ""}`}
+                      onClick={() => currentUser?.role !== "viewer" && setDropdownOpen(dropdownOpen === job.id ? null : job.id)}
+                      disabled={currentUser?.role === "viewer"}
                     >
+                      {currentUser?.role === "viewer" && <Lock size={16} className="text-gray-400" />}
                       Change Status
                     </button>
                     {dropdownOpen === job.id && (
@@ -196,15 +217,20 @@ const Careers = () => {
                       </div>
                     )}
                   </div>
+                  {/* Edit Button */}
                   <button
-                    className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
-                    onClick={() => navigate(`/edit-job/${job.id}`)}
+                   className={`flex items-center gap-2 px-3 py-1 border rounded shadow ${currentUser?.role === "viewer" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  onClick={() => currentUser?.role !== "viewer" && navigate(`/edit-job/${job.id}`)}
+                  disabled={currentUser?.role === "viewer"}
                   >
+                    {currentUser?.role === "viewer" && <Lock size={16} className="text-gray-400" />}
                     Edit
                   </button>
+                  {/* Delete Button */}
                   <button
-                    className="bg-white text-gray-700 px-3 py-1 rounded shadow border"
+                    className={`flex items-center gap-2 px-3 py-1 border rounded shadow ${currentUser?.role === "viewer" ? "opacity-50 cursor-not-allowed" : ""}`}
                     onClick={() =>
+                      currentUser?.role !== "viewer" &&
                       setConfirmationModal({
                         isOpen: true,
                         type: "delete",
@@ -215,7 +241,9 @@ const Careers = () => {
                         jobId: job.id,
                       })
                     }
+                    disabled={currentUser?.role === "viewer"}
                   >
+                    {currentUser?.role === "viewer" && <Lock size={16} className="text-gray-400" />}
                     Delete
                   </button>
                 </div>
@@ -227,22 +255,27 @@ const Careers = () => {
                 Experience Required: {job.experience_required} years
               </p>
 
-              {/* Make Public */}
+              {/* Make Public / Make Private Button */}
               <p
-                className="text-blue-500 mt-2 cursor-pointer"
-                onClick={() =>
+              className={`text-blue-500 mt-2 cursor-pointer flex items-center gap-2 ${
+                currentUser?.role === "viewer" ? "opacity-50 cursor-not-allowed" : ""
+              }`}              
+              onClick={() =>{
+                if (currentUser?.role !== "viewer") {
                   setConfirmationModal({
                     isOpen: true,
                     type: "status",
                     name: job.title,
                     from: job.status,
-                    to: "public",
-                    action: "public",
+                    to: job.status === "private" ? "active" : "private",
+                    action: job.status === "private" ? "active" : "private",
                     jobId: job.id,
-                  })
+                  });
                 }
+              }}
               >
-                Make Public
+                 {currentUser?.role === "viewer" && <FaLock className="text-gray-400" />} {/* Lock icon */}
+                 {job.status === "active" || job.status === "closed" ? "Make Private" : "Make Public"}
               </p>
             </div>
           ))}
