@@ -26,6 +26,14 @@ const JobService = {
       headers: { Authorization: `Bearer ${getAccessToken()}` },
     });
   },
+
+  getCategory: async () => {
+    const response = await apiClient.get("/jobs/categories/", {
+      headers: { Authorization: `Bearer ${getAccessToken()}` },
+    });
+    return response.data;
+  },
+
 };
 
 export default JobService;
