@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import JobService from "../api/jobService";
 
 const JobForm = ({ onSubmit, onClose, existingJob }) => {
   console.log("JobForm rendered with existingJob:", existingJob);
@@ -23,15 +24,34 @@ const JobForm = ({ onSubmit, onClose, existingJob }) => {
 
   console.log("Initial job state:", job);
 
-  const [categories, setCategories] = useState(["Design", "Development", "Marketing"]);
+  const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
   const [error, setError] = useState(null);
 
+
+  // Fetch categories from API when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await JobService.getCategory(); // Call API
+        setCategories(data.data); // Assuming API returns an array of categories
+        console.log("Fetched categories", data);
+      } catch (err) {
+        setError("Failed to load categories");
+        console.error("Error fetching categories:", err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+
+
   useEffect(() => {
     if (existingJob && existingJob.id) {
       console.log("Updating job state with existingJob:", existingJob);
-      setJob(existingJob);
+      setJob((prevJob) => ({...prevJob, ...existingJob}));
     }
   }, [existingJob]);
 
@@ -46,7 +66,6 @@ const JobForm = ({ onSubmit, onClose, existingJob }) => {
   // Handle category selection
   const handleCategoryChange = (e) => {
     setJob((prevJob) => ({ ...prevJob, category: e.target.value }));
-    // console.log("Updated job category:", e.target.value);
   };
 
   // Add a new category
@@ -54,7 +73,6 @@ const JobForm = ({ onSubmit, onClose, existingJob }) => {
     if (newCategory.trim()) {
       setCategories([...categories, newCategory.trim()]);
       setJob((prevJob) => ({ ...prevJob, category: newCategory.trim() }));
-      // console.log("Added new category:", newCategory.trim());
       setNewCategory("");
       setAddingCategory(false);
     }
@@ -71,7 +89,7 @@ const JobForm = ({ onSubmit, onClose, existingJob }) => {
     }
 
     // try {
-        const token = localStorage.getItem("access_token");
+        const token = localStorage.getItem("accessToken");
         if (!token) {
             setError("Authentication required. Please log in.");
             console.log("Authentication error: No access token found.");
@@ -119,157 +137,169 @@ const JobForm = ({ onSubmit, onClose, existingJob }) => {
 };
 
 
-  return (
-    <div className="fixed inset-0 bg-white/30 backdrop-blur-md flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-2/3">
-        <h2 className="text-2xl font-bold mb-4">{existingJob ? "Edit Job" : "Add Job"}</h2>
+return (
+  <div className="fixed inset-0 bg-white/30 backdrop-blur-md flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-2/3">
+      <h2 className="text-2xl font-bold mb-4">{existingJob ? "Edit Job" : "Add Job"}</h2>
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+      {error && <p className="text-red-600 mb-4">{error}</p>}
 
-        <div className="mb-4 flex gap-4">
-          <div className="w-1/3">
-            <label className="block text-gray-700">Category *</label>
-            <select
-              value={job.category}
-              onChange={handleCategoryChange}
-              className="w-full px-4 py-2 border rounded-lg"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat, index) => (
-                <option key={index} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-            {addingCategory ? (
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="border px-2 py-1 rounded-lg w-full"
-                  placeholder="New category"
-                />
-                <button onClick={addNewCategory} className="px-3 py-1 bg-blue-500 text-white rounded-lg">
-                  Add
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setAddingCategory(true)} className="text-blue-500 mt-2">
-                + Add New Category
-              </button>
-            )}
-          </div>
-
-          <div className="w-1/3">
-            <label className="block text-gray-700">Location *</label>
-            <input
-              type="text"
-              name="location"
-              value={job.location}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg"
-              required
-            />
-          </div>
-
-          <div className="w-1/3">
-            <label className="block text-gray-700">Timing</label>
-            <input
-              type="text"
-              name="timing"
-              value={job.timing}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border rounded-lg"
-            />
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Job Title *</label>
-          <input
-            type="text"
-            name="title"
-            value={job.title}
-            onChange={handleInputChange}
+      <div className="mb-4 flex gap-4">
+        {/* Category Dropdown */}
+        <div className="w-1/3">
+          <label className="block text-gray-700">Category *</label>
+          <select
+            value={job.category}
+            onChange={handleCategoryChange}
             className="w-full px-4 py-2 border rounded-lg"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Experience Required</label>
-          <input
-            type="number"
-            name="experience_required"
-            value={job.experience_required}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Last Date *</label>
-          <input
-            type="date"
-            name="last_date"
-            value={job.last_date}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border rounded-lg"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">About</label>
-          <textarea
-            name="about"
-            value={job.about}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Responsibilities</label>
-          {job.responsibilities?.map((resp, index) => (
-            <div key={index} className="flex gap-2 mb-2">
+          >
+            <option value="">Select a category</option>
+            {categories.map((cat, index) => (
+              <option key={index} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+          {addingCategory ? (
+            <div className="mt-2 flex gap-2">
               <input
                 type="text"
-                value={resp}
-                onChange={(e) => {
-                  const updatedResponsibilities = [...job.responsibilities];
-                  updatedResponsibilities[index] = e.target.value;
-                  setJob({ ...job, responsibilities: updatedResponsibilities });
-                }}
-                className="w-full px-4 py-2 border rounded-lg"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="border px-2 py-1 rounded-lg w-full"
+                placeholder="New category"
               />
+              <button onClick={addNewCategory} className="px-3 py-1 bg-blue-500 text-white rounded-lg">
+                Add
+              </button>
             </div>
-          ))}
-          <button
-            onClick={() => setJob({ ...job, responsibilities: [...(job.responsibilities || []), ""] })}
-            className="text-blue-500"
-          >
-            + Add Responsibility
-          </button>
+          ) : (
+            <button onClick={() => setAddingCategory(true)} className="text-blue-500 mt-2">
+              + Add New Category
+            </button>
+          )}
         </div>
 
-        <div className="flex justify-between">
-          <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded">
-            Cancel
-          </button>
-          <div>
-            <button onClick={() => handleSubmit("private")} className="border px-4 py-2 rounded mr-2">
-              Save as Private
-            </button>
-            <button onClick={() => handleSubmit("active")} className="bg-blue-600 text-white px-4 py-2 rounded">
-              Save & Publish
-            </button>
+        {/* Location Dropdown */}
+        <div className="w-1/3">
+          <label className="block text-gray-700">Location *</label>
+          <select
+            name="location"
+            value={job.location}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border rounded-lg"
+            required
+          >
+            <option value="">Select a location</option>
+            <option value="remote">Remote</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="onsite">Onsite</option>
+          </select>
+        </div>
+
+        {/* Job Timing Dropdown */}
+        <div className="w-1/3">
+          <label className="block text-gray-700">Timing *</label>
+          <select
+            name="timing"
+            value={job.timing}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border rounded-lg"
+            required
+          >
+            <option value="">Select job timing</option>
+            <option value="full-time">Full-time</option>
+            <option value="part-time">Part-time</option>
+            <option value="contract">Contract</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700">Job Title *</label>
+        <input
+          type="text"
+          name="title"
+          value={job.title}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 border rounded-lg"
+          required
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700">Experience Required</label>
+        <input
+          type="number"
+          name="experience_required"
+          value={job.experience_required}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 border rounded-lg"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700">Last Date *</label>
+        <input
+          type="date"
+          name="last_date"
+          value={job.last_date}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 border rounded-lg"
+          required
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700">About</label>
+        <textarea
+          name="about"
+          value={job.about}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 border rounded-lg"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700">Responsibilities</label>
+        {job.responsibilities?.map((resp, index) => (
+          <div key={index} className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={resp}
+              onChange={(e) => {
+                const updatedResponsibilities = [...job.responsibilities];
+                updatedResponsibilities[index] = e.target.value;
+                setJob({ ...job, responsibilities: updatedResponsibilities });
+              }}
+              className="w-full px-4 py-2 border rounded-lg"
+            />
           </div>
+        ))}
+        <button
+          onClick={() => setJob({ ...job, responsibilities: [...(job.responsibilities || []), ""] })}
+          className="text-blue-500"
+        >
+          + Add Responsibility
+        </button>
+      </div>
+
+      <div className="flex justify-between">
+        <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded">
+          Cancel
+        </button>
+        <div>
+          <button onClick={() => handleSubmit("private")} className="border px-4 py-2 rounded mr-2">
+            Save as Private
+          </button>
+          <button onClick={() => handleSubmit("active")} className="bg-blue-600 text-white px-4 py-2 rounded">
+            Save & Publish
+          </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default JobForm;
