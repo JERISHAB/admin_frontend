@@ -80,13 +80,15 @@ const Careers = () => {
   // Add Job
   const handleSubmit = async (newJob) => {
     try {
-      await JobService.addJob(newJob);
+      console.log("New Job:", newJob);
       setIsModalOpen(false);
       fetchJobs(); // Refresh job list
     } catch (error) {
       console.error("Error adding job:", error);
     }
   };
+
+  
 
   // Handle Confirmation
   const handleConfirm = () => {
@@ -121,7 +123,7 @@ const Careers = () => {
           disabled={currentUser?.role === "viewer"}
         >
           {currentUser?.role === "viewer" && <Lock size={16} className="text-gray-300" />}
-          Add New Job
+          + Add New Job
         </button>
       </div>
 
