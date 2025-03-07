@@ -9,7 +9,6 @@ const EditJob = () => {
   const location = useLocation();
   
   console.log("Job ID from useParams:", id);  // Debugging step 1
-  // console.log("Location state:", location.state); // Debugging step 2 (check if job data is passed via state)
 
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +21,7 @@ const EditJob = () => {
 
     // console.log("Fetching job for ID:", id); // Debugging step 3
 
-    const token = localStorage.getItem("refresh_token");
+    const token = localStorage.getItem("accessToken");
     axios.get(`http://127.0.0.1:8000/api/v1/jobs/${id}/`, {
       headers: { Authorization: `Bearer ${token}` },
     })
